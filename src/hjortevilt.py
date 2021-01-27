@@ -35,6 +35,7 @@ form = {
 
 
 def get_frames(input):
+    """Used to download the data and translate it into a dataframe"""
     animal, data_set = input
 
     url = '/'.join((url_root, animal, 'Jaktmateriale', data_set)) + 'Excel'
@@ -43,6 +44,7 @@ def get_frames(input):
     frame = pd.read_excel(rep.content)
     frame = frame.add_prefix(f'{animal} {data_set} ')
 
+    # In some of the tables, the first and second row are labels, this solve it
     if any(['unnamed' in i.lower() for i in frame.columns]):  # second row is also name
         columns = list(frame.columns)
         columns = [columns[i] if 'unnamed' not in columns[i].lower()
@@ -59,16 +61,22 @@ def get_frames(input):
 
 
 def get_hjortevilt_dataframe(reload=False, redownload=False):
+    """Get the data from hjorteviltregisteret
+    reload: used for debugging
+    redownload: used for debugging
+    """
 
+    # if the file is already created, just load it
     if os.path.isfile(DATAFRAME_FILENAME) and not redownload:
         dataframe = pd.read_csv(DATAFRAME_FILENAME)
         if not reload:
             return dataframe
 
     else:
+        # download the data and tur each table into an individual frame
         with ThreadPool(6) as pool:
             frames = pool.map(get_frames, iterprod(animals, data_sets))
-
+        # join the frames into one single large frame
         dataframe = pd.concat([frames[0].iloc[:, :3]]
                               + [i.iloc[:, 3:] for i in frames],
                               axis=1)
@@ -76,6 +84,8 @@ def get_hjortevilt_dataframe(reload=False, redownload=False):
     dataframe.rename(columns={dataframe.columns[0]: "jaktår",
                               dataframe.columns[1]: "kommunenr",
                               dataframe.columns[2]: "kommune"}, inplace=True)
+
+    # this only removes the last row, which is garbage
     dataframe.dropna(subset=dataframe.columns[:3], inplace=True)
 
     columns = list(dataframe.columns)
@@ -89,6 +99,8 @@ def get_hjortevilt_dataframe(reload=False, redownload=False):
 
     dataframe.columns = columns
     dataframe.iloc[:, :2] = dataframe.iloc[:, :2].astype(np.int32)
+
+    # there were some error in the data??? våler and herøy had multiple nr
     dataframe.loc[dataframe.loc[:, 'kommune'] == 'Våler', 'kommunenr'] = 3018
     dataframe.loc[dataframe.loc[:, 'kommune'] == 'Herøy', 'kommunenr'] = 1515
 
