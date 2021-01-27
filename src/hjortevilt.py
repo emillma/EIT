@@ -8,8 +8,10 @@ import re
 
 SAVE_EXCEL = False
 
-if not os.path.exists('data'):
-    os.makedirs('data')
+dir_path = os.path.dirname(os.path.realpath(__file__))
+DATA_FOLDER_PATH = os.path.join(dir_path, '..', 'data')
+DATAFRAME_FILENAME = os.path.join(DATA_FOLDER_PATH,
+                                  'hjorteviltregisteret.csv')
 
 url_root = "https://hjorteviltregisteret.no/Statistikk"
 
@@ -56,16 +58,20 @@ def get_frames(input):
     return frame
 
 
-def get_hjortevilt_frame():
-    filename = 'data/hjorteviltregisteret.csv'
+def get_hjortevilt_dataframe(reload=False, redownload=False):
 
-    if os.path.isfile(filename):
-        return pd.read_csv(filename)
-    with ThreadPool(128) as pool:
-        frames = pool.map(get_frames, iterprod(animals, data_sets))
+    if os.path.isfile(DATAFRAME_FILENAME) and not redownload:
+        dataframe = pd.read_csv(DATAFRAME_FILENAME)
+        if not reload:
+            return dataframe
 
-    dataframe = pd.concat([frames[0].iloc[:, :3]]+[i.iloc[:, 3:] for i in frames],
-                          axis=1)
+    else:
+        with ThreadPool(6) as pool:
+            frames = pool.map(get_frames, iterprod(animals, data_sets))
+
+        dataframe = pd.concat([frames[0].iloc[:, :3]]
+                              + [i.iloc[:, 3:] for i in frames],
+                              axis=1)
 
     dataframe.rename(columns={dataframe.columns[0]: "jaktår",
                               dataframe.columns[1]: "kommunenr",
@@ -78,7 +84,7 @@ def get_hjortevilt_frame():
         text = re.sub(' ½', '.5', text)
         text = re.sub(r'([0-9]*\.[0-9]*) år og eldre', r'>=\1 år', text)
         text = re.sub('gjennomsnittsvekt', 'snittvekt', text)
-        text = re.sub('kalv', ' 0.5 år', text)
+        # text = re.sub(' ?kalv(er)?', ' 0.5 år', text)
         columns[i] = text
 
     dataframe.columns = columns
@@ -86,6 +92,5 @@ def get_hjortevilt_frame():
     dataframe.loc[dataframe.loc[:, 'kommune'] == 'Våler', 'kommunenr'] = 3018
     dataframe.loc[dataframe.loc[:, 'kommune'] == 'Herøy', 'kommunenr'] = 1515
 
-    filename = 'data/hjorteviltregisteret.csv'
-    dataframe.to_csv(filename, index=False)
+    dataframe.to_csv(DATAFRAME_FILENAME, index=False)
     return dataframe
