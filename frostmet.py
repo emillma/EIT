@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 
 # Insert your own client ID here
-client_id = 'ebc5ed39-79fb-4aa5-9fa9-d19d63742a9f'
+client_id = '<CLIENT ID HER>'
 
 # Define endpoint and parameters
 endpoint = 'https://frost.met.no/observations/v0.jsonld'
