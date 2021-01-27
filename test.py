@@ -1,45 +1,22 @@
 import requests
 import pandas as pd
 import itertools
+from multiprocessing.pool import ThreadPool
+
 url_root = "http://gammel.hjorteviltregisteret.no"
+# url_root = "http://hjorteviltregisteret.no/Statistikk"
 
 dyr_liste = [
     'Elg',
     'Hjort']
 
-sett_dyr = {
-    'root': 'SettDyr',
-    'datatypes': [
-        'Bestandsutvikling',
-        'SetteDyr',
-        'FelteDyr',
-        'FeltPrJegerdag',
-        'SettPrJegerdag',
-        'SettPrJegertime',
-        'SettKuPrOkse',
-        'SettKalvPrKu',
-        'SettSpissbukkPrBukk'
-    ]}
 
-jaktmateriale = {
-    'root': 'Jaktmateriale',
-    'datatypes': [
-        'SlaktevekterGjennomsnitt',
-        'SlaktevekterKalv',
-        'SlaktevekterDyrHalvannetAar',
-        'SlaktevekterPrIndivid',
-        'FinnInnsendteDyr',
-        'Aldersfordeling',
-        'Gjennomsnittsalder'
-    ]}
-
-jaktstatistikk = {
-    'root': 'Jaktstatistikk',
-    'datatypes': [
-        'TildelteDyr',
-        'FelteDyrStatistikk',
-        'TildelteOgFelteDyr',
-    ]}
+data_types = [
+    'SettDyr/SetteDyr',
+    'SettDyr/FelteDyr',
+    'Jaktmateriale/SlaktevekterGjennomsnitt',
+    'Jaktstatistikk/TildelteDyr'
+]
 
 
 form = {
@@ -53,17 +30,27 @@ form = {
     'ExcelKnapp': 'Excel',
 }
 
+request_list = []
 session = requests.Session()
 for dyr in dyr_liste:
-    for data_class in [sett_dyr, jaktmateriale, jaktstatistikk]:
-        for data_types in data_class['datatypes']:
-            for data_type in data_types:
+    for data_type in data_types:
+        url = '/'.join([url_root, dyr, data_type])
+        request_list.append((url, form))
+        resp = session.post(url, headers=None, data=form)
+        print(url)
+        print(resp)
 
-                url = '/'.join([url_root, data_class['root'],
-                                data_type])
-                resp = session.post(url, headers=None, data=form)
-                print(url)
-                print(resp)
+
+# def get_data():
+#     '''Locates all sonars in an IP range and returns a list of namedtuples'''
+
+#     def req(ip):
+#         return
+
+#     with ThreadPool(128) as pool:
+#         res = filter(lambda x: x != None, pool.map(req, ))
+#     return list(res)
+
 
 # output = open('test.xls', 'wb')
 # output.write(resp.content)
