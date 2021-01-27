@@ -1,60 +1,51 @@
 import requests
 import pandas as pd
-import itertools
 from multiprocessing.pool import ThreadPool
+from itertools import product as iterprod
+import os
 
-url_root = "http://gammel.hjorteviltregisteret.no"
-# url_root = "http://hjorteviltregisteret.no/Statistikk"
+url_root = "https://hjorteviltregisteret.no/Statistikk"
 
-dyr_liste = [
+animals = [
     'Elg',
     'Hjort']
 
 
-data_types = [
-    'SettDyr/SetteDyr',
-    'SettDyr/FelteDyr',
-    'Jaktmateriale/SlaktevekterGjennomsnitt',
-    'Jaktstatistikk/TildelteDyr'
+data_set = [
+    'Sett',
+    'Felt',
+    'Slaktevekt',
 ]
 
-
 form = {
-    'Fylke': None,
-    'Kommune': None,
-    'Vald': None,
-    'Jaktfelt': None,
-    'FromYear': 1985,
-    'ToYear': 2020,
-    'VisningsType': 0,
-    'ExcelKnapp': 'Excel',
+    'fraår': 1985,
+    'granularitet': 1,
+    'gruppering': 2,
+    'tilår': 2020,
 }
 
-request_list = []
-session = requests.Session()
-for dyr in dyr_liste:
-    for data_type in data_types:
-        url = '/'.join([url_root, dyr, data_type])
-        request_list.append((url, form))
-        resp = session.post(url, headers=None, data=form)
-        print(url)
-        print(resp)
+
+def req(input):
+    animal, data_set = input
+    filename = f'data/{animal}_{data_set}.xls'
+    if os.path.isfile(filename):
+        return
+
+    url = '/'.join((url_root, animal, 'Jaktmateriale', data_set)) + 'Excel'
+    rep = requests.get(url, params=form)
+
+    with open(filename, 'wb') as file:
+        file.write(rep.content)
 
 
-# def get_data():
-#     '''Locates all sonars in an IP range and returns a list of namedtuples'''
+if not os.path.exists('data'):
+    os.makedirs('data')
 
-#     def req(ip):
-#         return
-
-#     with ThreadPool(128) as pool:
-#         res = filter(lambda x: x != None, pool.map(req, ))
-#     return list(res)
+with ThreadPool(128) as pool:
+    pool.map(req, iterprod(animals, data_set))
 
 
-# output = open('test.xls', 'wb')
-# output.write(resp.content)
-# output.close()
-
-# xls = pd.ExcelFile(resp.content)
-# print(xls.parse().columns)
+data_tables = []
+for animal, data_set in iterprod(animals, data_set):
+    filename = f'data/{animal}_{data_set}.xls'
+    data_tables.append(pd.read_excel(filename))
