@@ -111,7 +111,7 @@ def preprocess(df):
     return df
 
 
-def get_hjortevillt_data(reprocess=False, redownload=False):
+def get_hjortevillt_data(reprocess=False, redownload=False, animal='elg'):
 
     if os.path.isfile(HJORTEDATA_FILENAME) and not reprocess:
         df = pd.read_csv(HJORTEDATA_FILENAME)
@@ -129,6 +129,12 @@ def get_hjortevillt_data(reprocess=False, redownload=False):
         df.reset_index().groupby(['kommunenr', 'kommune']).
         size().reset_index().iloc[:, :-1].values)
 
-    df.drop('kommune', axis=1, inplace=True)
     extra_data = {'kommune_names': kommune_nr_name_relations}
+    df.drop('kommune', axis=1, inplace=True)
+
+    if animal in ['elg', 'hjort']:
+        drop_animal = 'hjort' if animal == 'elg' else 'elg'
+        df.drop(df.columns[df.columns.str.contains(drop_animal)],
+                axis=1, inplace=True)
+
     return df, extra_data
