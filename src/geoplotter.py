@@ -4,7 +4,10 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 import numpy as np
 
-
+"""
+Data hentet fra 
+https://kartkatalog.geonorge.no/metadata/7408853f-eb7d-48dd-bb6c-80c7e80f7392
+"""
 with open('../data/kommuner_geojson/Kommuner.geojson',
           'r', encoding='utf-8') as file:
     data = json.load(file)
