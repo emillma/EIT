@@ -132,6 +132,3 @@ def get_hjortevillt_data(reprocess=False, redownload=False):
     df.drop('kommune', axis=1, inplace=True)
     extra_data = {'kommune_names': kommune_nr_name_relations}
     return df, extra_data
-
-
-df = get_hjortevillt_data()
