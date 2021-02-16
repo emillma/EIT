@@ -111,6 +111,12 @@ def preprocess(df):
     return df
 
 
+def clean_incomplete_data(df):
+    feil_rapportering = df.loc[
+        df.loc[:, 'elg sett antall jegerdager']
+        != df.loc[:, 'elg felt antall jegerdager']]
+    
+
 def get_hjortevillt_data(reprocess=False, redownload=False, animal='elg'):
 
     if os.path.isfile(HJORTEDATA_FILENAME) and not reprocess:
