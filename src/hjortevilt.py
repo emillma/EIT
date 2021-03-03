@@ -115,7 +115,7 @@ def clean_incomplete_data(df):
     feil_rapportering = df.loc[
         df.loc[:, 'elg sett antall jegerdager']
         != df.loc[:, 'elg felt antall jegerdager']]
-    
+
 
 def get_hjortevillt_data(reprocess=False, redownload=False, animal='elg'):
 
@@ -144,3 +144,7 @@ def get_hjortevillt_data(reprocess=False, redownload=False, animal='elg'):
                 axis=1, inplace=True)
 
     return df, extra_data
+
+
+if __name__ == '__main__':
+    df, names = get_hjortevillt_data()
