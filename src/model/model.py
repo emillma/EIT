@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.optimize import minimize
 import sklearn.metrics as sm
 
@@ -26,31 +27,36 @@ class LogisticModel:
         predictions = self.predict(args[1], args[2])
         return np.sum((args[0] - predictions)**2)
 
-    def fit(self, inputs: np.ndarray, targets: np.ndarray):
+    def fit(self, inputs: pd.DataFrame, targets: pd.DataFrame):
         """
         input: time x params
         targets: time x targets
         """
         x0 = np.random.random(2 + self.num_weather_vars)
         final_params = minimize(
-            self.objective_function, x0, args=(targets, inputs["last_year"], inputs["weather"]), method="nelder-mead")
+            self.objective_function, x0, args=(targets, inputs["last_year"].to_numpy(), inputs[["w0", "w1", "w2"]].to_numpy()), method="nelder-mead")
 
         self.K = final_params.x[0]
         self.R0 = final_params.x[1]
         self.a = final_params.x[2:]
 
-    def test(self, inputs: np.ndarray, targets: np.ndarray):
-        predictions = self.predict(inputs["last_year"], inputs["weather"])
+    def test(self, inputs: pd.DataFrame, targets: pd.DataFrame):
+        predictions = self.predict(
+            inputs["last_year"].to_numpy(), inputs[["w0", "w1", "w2"]].to_numpy())
 
         print("Mean absolute error =", round(
             sm.mean_absolute_error(targets, predictions), 2))
 
 
 if __name__ == "__main__":
-    inputs = {
-        "last_year": np.array([100, 101, 105, 120, 130]),
-        "weather": np.array([[0.1, 0.2, 0.1], [0.4, 0.5, 0.6], [0.2, 0.4, 6], [0.4, 0.7, 2], [0.1, 0.6, 1]])
+    inputs_dict = {
+        "last_year": [100, 101, 105, 120, 130],
+        "w0": [0.1, 0.4, 0.2, 0.4, 0.1],
+        "w1": [0.2, 0.5, 0.4, 0.7, 0.6],
+        "w2": [0.1, 0.6, 0.6, 0.2, 1]
     }
+
+    inputs = pd.DataFrame.from_dict(inputs_dict)
     outputs = [101, 105, 120, 130, 120]
 
     model = LogisticModel(3)
