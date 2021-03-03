@@ -1,0 +1,13 @@
+epochs: 100
+batch_size: 32
+val_frac: 0.2
+test_frac: 0.1
+patience_val: 10
+optimizer: "Adam"
+dropout: 0.1
+layers:
+  - width: 32
+    activation: "relu"
+  - width: 16
+    activation: "relu"
+data_path: "data/test.csv"
