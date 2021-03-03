@@ -6,4 +6,4 @@ df, _ = get_hjortevillt_data()
 x = df['elg sett antall jegerdager']
 y = df['elg sett sum sette elg']
 
-plt.scatter(x, y)
+plt.scatter(x, y/x)

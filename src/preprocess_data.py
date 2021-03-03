@@ -13,7 +13,7 @@ def pre_process(df):
     rap_feil_index = rap_feil[rap_feil].index
     df.drop(index=rap_feil_index, inplace=True)
 
-    JEGERDAGER_MIN = 500
+    JEGERDAGER_MIN = 1000
     df = df.loc[df['elg sett antall jegerdager'] >= JEGERDAGER_MIN]
 
     jegerdager = df['elg sett antall jegerdager']
