@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -27,22 +28,22 @@ class LogisticModel:
         predictions = self.predict(args[1], args[2])
         return np.sum((args[0] - predictions)**2)
 
-    def fit(self, inputs: pd.DataFrame, targets: pd.DataFrame):
+    def fit(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
         """
         input: time x params
         targets: time x targets
         """
         x0 = np.random.random(2 + self.num_weather_vars)
         final_params = minimize(
-            self.objective_function, x0, args=(targets, inputs["last_year"].to_numpy(), inputs[["w0", "w1", "w2"]].to_numpy()), method="nelder-mead")
+            self.objective_function, x0, args=(targets, inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy()), method="nelder-mead")
 
         self.K = final_params.x[0]
         self.R0 = final_params.x[1]
         self.a = final_params.x[2:]
 
-    def test(self, inputs: pd.DataFrame, targets: pd.DataFrame):
+    def test(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
         predictions = self.predict(
-            inputs["last_year"].to_numpy(), inputs[["w0", "w1", "w2"]].to_numpy())
+            inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy())
 
         print("Mean absolute error =", round(
             sm.mean_absolute_error(targets, predictions), 2))
@@ -60,6 +61,6 @@ if __name__ == "__main__":
     outputs = [101, 105, 120, 130, 120]
 
     model = LogisticModel(3)
-    model.test(inputs, outputs)
-    model.fit(inputs, outputs)
-    model.test(inputs, outputs)
+    model.test(inputs, outputs, "last_year", ["w0", 'w1', 'w2'])
+    model.fit(inputs, outputs, "last_year", ["w0", 'w1', 'w2'])
+    model.test(inputs, outputs, "last_year", ["w0", 'w1', 'w2'])
