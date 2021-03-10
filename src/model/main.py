@@ -1,8 +1,10 @@
 import argparse
 import os
 import yaml
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
-from nn import PGNN_train_test
+from .nn import MGNN
 
 
 def setup_args() -> dict:
@@ -25,4 +27,17 @@ def setup_args() -> dict:
 
 if __name__ == "__main__":
     config = setup_args()
-    PGNN_train_test(config)
+    data_config, model_config = config["data"], config["model"]
+
+    data = pd.read_excel(data_config["path"])
+
+    train, test = train_test_split(data, test_size=0.2)
+
+    data_keys = [data_config["last_year_ley"], *
+                 data_config["weather_keys"], *data_config["extra_data_keys"]]
+
+    model = MGNN(config)
+    model.train(model_config, train[data_keys], train[config["this_year_key"]],
+                data_config["last_year_key", data_config["weather_keys"]])
+
+    model.test(data["testX"], data["testY"])
