@@ -1,4 +1,5 @@
 from os import supports_dir_fd
+from sys import int_info
 from pandas.core.frame import DataFrame
 from sklearn.cross_decomposition import PLSRegression
 from hjortevilt import get_hjortevillt_data
@@ -6,6 +7,9 @@ from preprocess_data import pre_process
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+# <--- This is important for 3d plotting
+from mpl_toolkits.mplot3d import Axes3D
+
 df, _ = get_hjortevillt_data()
 df = pre_process(df)
 df.drop(columns=df.columns[df.columns.str.contains('jaktfelt')], inplace=True)
@@ -35,5 +39,12 @@ x_scores = plsr.x_scores_
 y_scores = plsr.y_scores_
 x_load = plsr.x_loadings_
 y_load = plsr.y_loadings_
-plt.scatter(x_scores[:, 0], x_scores[:, 1], c=X_index.get_level_values(0))
-print(plsr.score(X, Y))
+
+colors = X_index.get_level_values(0).values
+val, indices = np.unique(colors, return_inverse=True)
+# np.random.shuffle
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(x_scores[:, 0], x_scores[:, 1], x_scores[:, 2], c=indices,
+           s=30, cmap='jet')
+plt.show()
