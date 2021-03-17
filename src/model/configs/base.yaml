@@ -1,12 +1,17 @@
 model:
+  save: False
+  load: True
+  save_dir: "models/test"
+  source_dir: "models/test"
   num_weather_params: 4
-  epochs: 100
+  epochs: 10
   batch_size: 32
   val_frac: 0.2
   test_frac: 0.1
   patience_val: 10
   optimizer: "Adam"
   dropout: 0.1
+  plsr_components: 4
   layers:
     - width: 32
       activation: "relu"
