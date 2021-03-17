@@ -39,8 +39,12 @@ if __name__ == "__main__":
                  data_config["weather_keys"], *data_config["extra_data_keys"]]
 
     model = MGNN(config["model"])
-    model.train(model_config, train[data_keys], train[data_config["this_year_key"]],
-                data_config["last_year_key"], data_config["weather_keys"])
+    if not config["model"]["load"]:
+        model.train(model_config, train[data_keys], train[data_config["this_year_key"]],
+                    data_config["last_year_key"], data_config["weather_keys"])
 
     model.test(test[data_keys], test[data_config["this_year_key"]],
                data_config["last_year_key"], data_config["weather_keys"])
+
+    if config["model"]["save"]:
+        model.dump_model_to_file(config["model"]["save_dir"])
