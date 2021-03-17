@@ -13,8 +13,8 @@ model:
     - width: 16
       activation: "relu"
 data:
-  path: "data/test.csv"
+  path: "data/data.csv"
   last_year_key: "last_year"
   this_year_key: "this_year"
   weather_keys: ["w0", "w1", "w2", "w3"]
-  extra_data_keys: ["pol", "area"]
+  extra_data_keys: ["other_1", "other_2"]

@@ -8,7 +8,7 @@ from tensorflow.keras.losses import mean_squared_error
 from sklearn.cross_decomposition import PLSRegression
 import pandas as pd
 
-from model.model import LogisticModel
+from model import LogisticModel
 
 
 class MGNN:
@@ -19,11 +19,11 @@ class MGNN:
         self.l3_model.add(BatchNormalization())
         for i in range(len(layers)):
             if i == 0:
-                self.l3_model.add(Input(layers[i]['nodes']))
+                self.l3_model.add(Input(layers[i]['width']))
             else:
-                self.l3_model.add(Dense(layers[i]["nodes"],
+                self.l3_model.add(Dense(layers[i]["width"],
                                         activation=layers[i]["activation"]))
-            self.l3_model.add(Dropout(config["dropout_frac"]))
+            self.l3_model.add(Dropout(config["dropout"]))
         self.l3_model.add(Dense(1, activation='linear'))
 
         self.l2_model = PLSRegression(n_components=1)
@@ -35,13 +35,13 @@ class MGNN:
         self.l1_model.fit(train_X, train_Y, last_year_key, weather_keys)
 
         l1_prediction = self.l1_model.predict(
-            train_X[last_year_key], train_X[weather_keys])
+            train_X[last_year_key].to_numpy(), train_X[weather_keys].to_numpy())
         l1_error = train_Y - l1_prediction
         train_X["l1_prediction"] = l1_prediction
 
         self.l2_model.fit(train_X, l1_error)
 
-        l2_prediction = self.l2_model.predict(train_X)
+        l2_prediction = self.l2_model.predict(train_X).reshape(l1_error.shape)
         train_X["l2_prediction"] = l2_prediction
 
         remaining_error = l1_error - l2_prediction
@@ -57,7 +57,7 @@ class MGNN:
                               metrics=[mean_squared_error])
 
         early_stopping = EarlyStopping(
-            monitor='val_loss_1', patience=patience_val, verbose=1)
+            monitor='val_loss', patience=patience_val, verbose=1)
 
         print(f'Running... {config["optimizer"]}')
         self.l3_model.fit(train_X, remaining_error,
@@ -68,10 +68,11 @@ class MGNN:
 
     def predict(self, inputs: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
         l1_prediction = self.l1_model.predict(
-            inputs[last_year_key], inputs[weather_keys])
+            inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy())
         inputs["l1_prediction"] = l1_prediction
 
-        l2_prediction = self.l2_model.predict(inputs)
+        l2_prediction = self.l2_model.predict(
+            inputs).reshape(l1_prediction.shape)
         inputs["l2_prediction"] = l2_prediction
 
         nn_prediction = self.l3_model.predict(inputs)
@@ -80,10 +81,11 @@ class MGNN:
 
     def test(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
         l1_prediction = self.l1_model.predict(
-            inputs[last_year_key], inputs[weather_keys])
+            inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy())
         inputs["l1_prediction"] = l1_prediction
 
-        l2_prediction = self.l2_model.predict(inputs)
+        l2_prediction = self.l2_model.predict(
+            inputs).reshape(l1_prediction.shape)
         inputs["l2_prediction"] = l2_prediction
 
         remaining_error = targets - l1_prediction - l2_prediction
