@@ -15,24 +15,26 @@ class MGNN:
 
     def __init__(self, config: dict) -> None:
         layers = config["layers"]
-        self.nn_model = Sequential()
+        self.l3_model = Sequential()
         for i in range(len(layers)):
             if i == 0:
-                self.nn_model.add(Input(layers[i]['nodes']))
+                self.l3_model.add(Input(layers[i]['nodes']))
             else:
-                self.nn_model.add(Dense(layers[i]["nodes"],
+                self.l3_model.add(Dense(layers[i]["nodes"],
                                         activation=layers[i]["activation"]))
-            self.nn_model.add(Dropout(config["dropout_frac"]))
-        self.nn_model.add(Dense(1, activation='linear'))
+            self.l3_model.add(Dropout(config["dropout_frac"]))
+        self.l3_model.add(Dense(1, activation='linear'))
 
-        self.model = LogisticModel(config["num_weather_params"])
+        self.l1_model = LogisticModel(config["num_weather_params"])
 
     def train(self, config: dict, train_X: pd.DataFrame, train_Y: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
 
-        self.model.fit(train_X, train_Y)
+        self.l1_model.fit(train_X, train_Y)
 
-        model_prediction = self.model.predict(
+        model_prediction = self.l1_model.predict(
             train_X[last_year_key], train_X[weather_keys])
+        
+        model_error = train_Y - model_prediction
 
         train_X["model_prediction"] = model_prediction
 
@@ -42,7 +44,7 @@ class MGNN:
         val_frac = config["val_frac"]
         patience_val = config["patience_val"]
 
-        self.nn_model.compile(loss=mean_squared_error,
+        self.l3_model.compile(loss=mean_squared_error,
                               optimizer=config["optimizer"],
                               metrics=[mean_squared_error])
 
@@ -50,7 +52,7 @@ class MGNN:
             monitor='val_loss_1', patience=patience_val, verbose=1)
 
         print(f'Running... {config["optimizer"]}')
-        self.nn_model.fit(train_X, train_Y,
+        self.l3_model.fit(train_X, model_error,
                           batch_size=batch_size,
                           epochs=num_epochs,
                           verbose=1,
@@ -60,14 +62,17 @@ class MGNN:
         self.new_method(model_name)
 
     def predict(self, inputs: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
-        model_prediction = self.model.predict(
+        model_prediction = self.l1_model.predict(
             inputs[last_year_key], inputs[weather_keys])
         inputs["model_prediction"] = model_prediction
-        self.nn_model.predict(inputs)
+        nn_prediction = self.l3_model.predict(inputs)
+
+        return model_prediction + nn_prediction
 
     def test(self, testX: pd.DataFrame, testY: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
-        model_prediction = self.model.predict(
+        model_prediction = self.l1_model.predict(
             testX[last_year_key], testX[weather_keys])
         testX["model_prediction"] = model_prediction
-        test_score = self.nn_model.evaluate(testX, testY, verbose=0)
+        model_error = model_prediction - testY
+        test_score = self.l3_model.evaluate(testX, model_error)
         return test_score
