@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 
 # Insert your own client ID here
-client_id = '<CLIENT ID HER>'
+client_id = '0cc29786-04f6-4dac-b6ad-3ac0565ee799'
 
 # Define endpoint and parameters
 endpoint = 'https://frost.met.no/observations/v0.jsonld'
@@ -32,7 +32,7 @@ for i in range(len(data)):
     row['referenceTime'] = data[i]['referenceTime']
     row['sourceId'] = data[i]['sourceId']
     df = df.append(row)
-
+#pd.set_option("display.max_rows", None, "display.max_columns", None)
 df = df.reset_index()
 
 print(df.head())
@@ -44,4 +44,4 @@ df2 = df[columns].copy()
 df2['referenceTime'] = pd.to_datetime(df2['referenceTime'])
 
 # Preview the result
-print(df2.head())
+#print(df2.head())
