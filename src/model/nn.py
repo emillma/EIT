@@ -2,6 +2,7 @@
 from typing import List
 from joblib import dump, load
 import os
+import numpy as np
 
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization
@@ -29,7 +30,7 @@ class MGNN:
                     self.l3_model.add(Dense(layers[i]["width"],
                                             activation=layers[i]["activation"]))
                 self.l3_model.add(Dropout(config["dropout"]))
-            self.l3_model.add(Dense(1, activation='linear'))
+            self.l3_model.add(Dense(1, activation='sigmoid'))
 
             self.l2_model = PLSRegression(
                 n_components=config["plsr_components"])
@@ -74,8 +75,16 @@ class MGNN:
 
         l2_prediction = self.l2_model.predict(train_X).reshape(l1_error.shape)
         train_X["l2_prediction"] = l2_prediction
+        # train_X["l2_prediction"] = l2_prediction
+        # for i, loading in enumerate(self.l2_model.x_loadings_.T):
+        #     train_X[f"l2_loading{i}"] = loading
 
-        remaining_error = l1_error - l2_prediction
+        l2_error = l1_error - l2_prediction
+        self.l2_error_scaling = np.std(l2_error) * 3 * 2
+        self.l2_error_mean = np.mean(l2_error)
+
+        l2_error = ((l2_error - self.l2_error_mean)
+                    / self.l2_error_scaling + 0.5)
 
         # Hyper-parameters of the training process
         num_epochs = config["epochs"]
@@ -91,7 +100,7 @@ class MGNN:
             monitor='val_loss', patience=patience_val, verbose=1)
 
         print(f'Running... {config["optimizer"]}')
-        self.l3_model.fit(train_X, remaining_error,
+        self.l3_model.fit(train_X, l2_error,
                           batch_size=batch_size,
                           epochs=num_epochs,
                           verbose=1,
@@ -104,22 +113,18 @@ class MGNN:
 
         l2_prediction = self.l2_model.predict(
             inputs).reshape(l1_prediction.shape)
+
+        l2_prediction = ((l2_prediction - 0.5) * self.l2_error_scaling
+                         + self.l2_error_mean)
+
         inputs["l2_prediction"] = l2_prediction
 
         nn_prediction = self.l3_model.predict(inputs)
 
-        return l1_prediction + l2_prediction + nn_prediction
+        return l1_prediction + l2_prediction + np.squeeze(nn_prediction)
 
     def test(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
-        l1_prediction = self.l1_model.predict(
-            inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy())
-        inputs["l1_prediction"] = l1_prediction
+        predictions = self.predict(inputs, last_year_key, weather_keys)
+        test_score = np.mean((targets - predictions)**2)
 
-        l2_prediction = self.l2_model.predict(
-            inputs).reshape(l1_prediction.shape)
-        inputs["l2_prediction"] = l2_prediction
-
-        remaining_error = targets - l1_prediction - l2_prediction
-
-        test_score = self.l3_model.evaluate(inputs, remaining_error)
         return test_score

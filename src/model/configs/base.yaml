@@ -1,6 +1,6 @@
 model:
   save: False
-  load: True
+  load: False
   save_dir: "models/test"
   source_dir: "models/test"
   num_weather_params: 4
