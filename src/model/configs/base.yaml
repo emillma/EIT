@@ -3,7 +3,7 @@ model:
   load: False
   save_dir: "models/test"
   source_dir: "models/test"
-  num_weather_params: 4
+  num_weather_params: 0
   epochs: 10
   batch_size: 32
   val_frac: 0.2
@@ -18,8 +18,8 @@ model:
     - width: 16
       activation: "relu"
 data:
-  path: "data/data.csv"
-  last_year_key: "last_year"
-  this_year_key: "this_year"
-  weather_keys: ["w0", "w1", "w2", "w3"]
+  path: "data/test_data.csv"
+  last_year_key: "elg sett sum sette elg pr dag"
+  this_year_key: "elg sett sum sette elg pr dag neste aar"
+  weather_keys: []
   extra_data_keys: ["other_1", "other_2"]

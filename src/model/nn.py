@@ -74,10 +74,10 @@ class MGNN:
         self.l2_model.fit(train_X, l1_error)
 
         l2_prediction = self.l2_model.predict(train_X).reshape(l1_error.shape)
+
+        for i, loading in enumerate(self.l2_model.x_scores_.T):
+            train_X[f"l2_loading_{i}"] = loading
         train_X["l2_prediction"] = l2_prediction
-        # train_X["l2_prediction"] = l2_prediction
-        # for i, loading in enumerate(self.l2_model.x_loadings_.T):
-        #     train_X[f"l2_loading{i}"] = loading
 
         l2_error = l1_error - l2_prediction
         self.l2_error_scaling = np.std(l2_error) * 3 * 2
@@ -117,13 +117,18 @@ class MGNN:
         l2_prediction = ((l2_prediction - 0.5) * self.l2_error_scaling
                          + self.l2_error_mean)
 
-        inputs["l2_prediction"] = l2_prediction
+        for i, loading in enumerate(self.l2_model.transform(inputs).T):
+            inputs[f"l2_loading_{i}"] = loading
 
+        inputs["l2_prediction"] = l2_prediction
         nn_prediction = self.l3_model.predict(inputs)
 
         return l1_prediction + l2_prediction + np.squeeze(nn_prediction)
 
     def test(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
+        self.l1_model.test(inputs, targets, last_year_key, weather_keys)
+        self.l2_model.test(inputs, targets, last_year_key, weather_keys)
+
         predictions = self.predict(inputs, last_year_key, weather_keys)
         test_score = np.mean((targets - predictions)**2)
 
