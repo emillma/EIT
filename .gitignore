@@ -1,6 +1,9 @@
 
 data/
 
-src/__pycache__/
+venv/
+models/
+
+__pycache__/
 
 *.xlsx
