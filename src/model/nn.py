@@ -126,10 +126,15 @@ class MGNN:
         return l1_prediction + l2_prediction + np.squeeze(nn_prediction)
 
     def test(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
-        self.l1_model.test(inputs, targets, last_year_key, weather_keys)
-        self.l2_model.test(inputs, targets, last_year_key, weather_keys)
+        inputs_copy = inputs.copy()
+        l1_test_error, l1_error, l1_predictions = self.l1_model.test(
+            inputs_copy, targets, last_year_key, weather_keys)
+        inputs_copy["l1_prediction"] = l1_predictions
+        l2_predictions = self.l2_model.predict(
+            inputs_copy).reshape(l1_error.shape)
+        l2_test_error = np.mean((l1_error - l2_predictions)**2)
 
         predictions = self.predict(inputs, last_year_key, weather_keys)
         test_score = np.mean((targets - predictions)**2)
 
-        return test_score
+        return test_score, l2_test_error, l1_test_error

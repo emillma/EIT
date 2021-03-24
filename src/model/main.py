@@ -45,8 +45,9 @@ if __name__ == "__main__":
         model.train(model_config, train[data_keys], train[data_config["this_year_key"]],
                     data_config["last_year_key"], data_config["weather_keys"])
 
-    test_result = model.test(test[data_keys], test[data_config["this_year_key"]],
-                             data_config["last_year_key"], data_config["weather_keys"])
-    print(f'Test result: {test_result}')
+    test_results = model.test(test[data_keys], test[data_config["this_year_key"]],
+                              data_config["last_year_key"], data_config["weather_keys"])
+    print(
+        f'Test result: Overal error: {test_results[0]}, l2 error: {test_results[1]}, l1 error: {test_results[2]}')
     if config["model"]["save"]:
         model.dump_model_to_file(config["model"]["save_dir"])

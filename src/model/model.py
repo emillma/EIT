@@ -1,5 +1,4 @@
-from typing import List
-from joblib import dump, load
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -43,12 +42,11 @@ class LogisticModel:
         self.R0 = final_params.x[1]
         self.a = final_params.x[2:]
 
-    def test(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
+    def test(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]) -> Tuple[float]:
         predictions = self.predict(
             inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy())
 
-        print("Mean absolute error =", round(
-            sm.mean_absolute_error(targets, predictions), 2))
+        return sm.mean_absolute_error(targets, predictions), targets - predictions, predictions
 
 
 if __name__ == "__main__":
