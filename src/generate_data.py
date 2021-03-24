@@ -23,3 +23,4 @@ data = df.loc[X_index]
 data.loc[:, 'elg sett sum sette elg pr dag neste aar'] = (
     df.loc[Y_index, 'elg sett sum sette elg pr dag'].values
 )
+data.to_csv('test_data.csv')
