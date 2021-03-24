@@ -38,7 +38,8 @@ if __name__ == "__main__":
     data_keys = [data_config["last_year_key"], *
                  data_config["weather_keys"], *data_config["extra_data_keys"]]
 
-    data_keys = [i for i in train.columns if i != data_config["this_year_key"]]
+    data_keys = [i for i in train.columns[1:]
+                 if i != data_config["this_year_key"]]
 
     model = MGNN(config["model"])
     if not config["model"]["load"]:
@@ -48,6 +49,7 @@ if __name__ == "__main__":
     test_results = model.test(test[data_keys], test[data_config["this_year_key"]],
                               data_config["last_year_key"], data_config["weather_keys"])
     print(
-        f'Test result: Overal error: {test_results[0]}, l2 error: {test_results[1]}, l1 error: {test_results[2]}')
+        f'Test result: Overall error: {test_results[0]}, l3 error: {test_results[1]}, l2 error: {test_results[2]}, l1 error: {test_results[3]}')
+    print(f'Up to l2 error: {test_results[4]}')
     if config["model"]["save"]:
         model.dump_model_to_file(config["model"]["save_dir"])

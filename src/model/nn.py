@@ -80,11 +80,11 @@ class MGNN:
         train_X["l2_prediction"] = l2_prediction
 
         l2_error = l1_error - l2_prediction
-        self.l2_error_scaling = np.std(l2_error) * 3 * 2
-        self.l2_error_mean = np.mean(l2_error)
+        self.l3_error_scaling = np.std(l2_error) * 3 * 2
+        self.l3_error_mean = np.mean(l2_error)
 
-        l2_error = ((l2_error - self.l2_error_mean)
-                    / self.l2_error_scaling + 0.5)
+        l2_error = ((l2_error - self.l3_error_mean)
+                    / self.l3_error_scaling + 0.5)
 
         # Hyper-parameters of the training process
         num_epochs = config["epochs"]
@@ -114,14 +114,14 @@ class MGNN:
         l2_prediction = self.l2_model.predict(
             inputs).reshape(l1_prediction.shape)
 
-        l2_prediction = ((l2_prediction - 0.5) * self.l2_error_scaling
-                         + self.l2_error_mean)
-
         for i, loading in enumerate(self.l2_model.transform(inputs).T):
             inputs[f"l2_loading_{i}"] = loading
 
         inputs["l2_prediction"] = l2_prediction
         nn_prediction = self.l3_model.predict(inputs)
+
+        nn_prediction = ((nn_prediction - 0.5) * self.l3_error_scaling
+                         + self.l3_error_mean)
 
         return l1_prediction + l2_prediction + np.squeeze(nn_prediction)
 
@@ -130,11 +130,29 @@ class MGNN:
         l1_test_error, l1_error, l1_predictions = self.l1_model.test(
             inputs_copy, targets, last_year_key, weather_keys)
         inputs_copy["l1_prediction"] = l1_predictions
+
         l2_predictions = self.l2_model.predict(
             inputs_copy).reshape(l1_error.shape)
+        for i, loading in enumerate(self.l2_model.transform(inputs_copy).T):
+            inputs_copy[f"l2_loading_{i}"] = loading
+        inputs_copy["l2_prediction"] = l2_predictions
+
+        l2_error = l1_error - l2_predictions
+
+        upto_l2_error = np.mean(
+            ((l1_predictions + l2_predictions) - targets)**2)
+
+        self.l3_error_scaling = np.std(l2_error) * 3 * 2
+        self.l3_error_mean = np.mean(l2_error)
+
+        l2_error = ((l2_error - self.l3_error_mean)
+                    / self.l3_error_scaling + 0.5)
+
         l2_test_error = np.mean((l1_error - l2_predictions)**2)
+
+        l3_test_error = self.l3_model.evaluate(inputs_copy, l2_error)[0]
 
         predictions = self.predict(inputs, last_year_key, weather_keys)
         test_score = np.mean((targets - predictions)**2)
 
-        return test_score, l2_test_error, l1_test_error
+        return test_score, l3_test_error, l2_test_error, l1_test_error, upto_l2_error
