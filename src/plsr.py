@@ -7,6 +7,8 @@ from preprocess_data import pre_process
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+from adjustText import adjust_text
+import re
 # <--- This is important for 3d plotting
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -43,8 +45,26 @@ y_load = plsr.y_loadings_
 colors = X_index.get_level_values(0).values
 val, indices = np.unique(colors, return_inverse=True)
 # np.random.shuffle
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(x_scores[:, 0], x_scores[:, 1], x_scores[:, 2], c=indices,
-           s=30, cmap='jet')
-plt.show()
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# ax.scatter(x_scores[:, 0], x_scores[:, 1], x_scores[:, 2], c=indices,
+#            s=30, cmap='jet')
+loadings = plsr.x_loadings_
+L1 = loadings.T[1]
+L2 = loadings.T[3]
+L3 = loadings.T[2]
+L4 = loadings.T[3]
+
+fig, ax = plt.subplots(1, 1)
+fig.set_size_inches(12, 8)
+plt.tight_layout()
+labels = [re.sub('elg ', '', label) for label in df.columns]
+colors = [0 if 'sett' in label else 1 for label in labels]
+ax.scatter(L1, L2, c=colors)
+ax.xaxis.zoom(-2)
+texts = [plt.text(L1[i], L2[i], labels[i], ha='left', va='center')
+         for i in range(len(df.columns))]
+adjust_text(texts, arrowprops=dict(arrowstyle='-', color='black'))
+# for i, txt in enumerate(df.columns):
+#     ax.annotate(txt, (L1[i], L2[i]))
+# plt.show()
