@@ -30,8 +30,9 @@ Y_index = pd.MultiIndex.from_frame(index_frame[['kommunenr', 'neste jaktår']])
 diff = df.groupby('kommunenr').diff(1)
 
 X = df.loc[X_index].values
-Y = df.loc[Y_index, df.columns.str.contains('sett')].values
-plsr = PLSRegression(8, scale=True)
+Y = df.loc[Y_index, df.columns.str.contains(
+    'sett')]['elg sett sum sette elg pr dag'].values[:, None]
+plsr = PLSRegression(n_components=4, scale=True)
 plsr.fit(X, Y)
 
 # plt.plot(plsr.coef_[:, :])
@@ -50,17 +51,24 @@ val, indices = np.unique(colors, return_inverse=True)
 # ax.scatter(x_scores[:, 0], x_scores[:, 1], x_scores[:, 2], c=indices,
 #            s=30, cmap='jet')
 loadings = plsr.x_loadings_
-L1 = loadings.T[1]
-L2 = loadings.T[3]
-L3 = loadings.T[2]
-L4 = loadings.T[3]
+L1 = loadings.T[0]
+L2 = loadings.T[1]
+
 
 fig, ax = plt.subplots(1, 1)
 fig.set_size_inches(12, 8)
 plt.tight_layout()
 labels = [re.sub('elg ', '', label) for label in df.columns]
 colors = [0 if 'sett' in label else 1 for label in labels]
-ax.scatter(L1, L2, c=colors)
+
+for remove in ['sett ', 'felt ', 'pr dag']:
+    labels = [re.sub(remove, '', label) for label in labels]
+# labels = [re.sub('felt ', '', label) for label in labels]
+
+scatter = ax.scatter(L1, L2, c=colors)
+ax.legend(scatter.legend_elements()[0], ['Sett per jaktdøgn', 'Felt totalt'],
+          loc="lower left", title="")
+
 ax.xaxis.zoom(-2)
 texts = [plt.text(L1[i], L2[i], labels[i], ha='left', va='center')
          for i in range(len(df.columns))]
