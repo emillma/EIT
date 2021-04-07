@@ -22,13 +22,11 @@ class MGNN:
         else:
             layers = config["layers"]
             self.l3_model = Sequential()
+            self.l3_model.add(Input(layers[0]['width']))
             self.l3_model.add(BatchNormalization())
-            for i in range(len(layers)):
-                if i == 0:
-                    self.l3_model.add(Input(layers[i]['width']))
-                else:
-                    self.l3_model.add(Dense(layers[i]["width"],
-                                            activation=layers[i]["activation"]))
+            for i in range(1, len(layers)):
+                self.l3_model.add(Dense(layers[i]["width"],
+                                        activation=layers[i]["activation"]))
                 self.l3_model.add(Dropout(config["dropout"]))
             self.l3_model.add(Dense(1, activation='sigmoid'))
 

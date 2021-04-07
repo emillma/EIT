@@ -13,6 +13,7 @@ model:
   dropout: 0.1
   plsr_components: 4
   layers:
+    - width: 22
     - width: 64
       activation: "elu"
     - width: 32
