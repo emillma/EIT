@@ -27,7 +27,7 @@ class MGNN:
             for i in range(1, len(layers)):
                 self.l3_model.add(Dense(layers[i]["width"],
                                         activation=layers[i]["activation"]))
-                self.l3_model.add(Dropout(config["dropout"]))
+            self.l3_model.add(Dropout(config["dropout"]))
             self.l3_model.add(Dense(1, activation='sigmoid'))
 
             self.l2_model = PLSRegression(

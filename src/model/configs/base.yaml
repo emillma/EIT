@@ -1,5 +1,5 @@
 model:
-  save: False
+  save: True
   load: False
   save_dir: "models/test"
   source_dir: "models/test"
