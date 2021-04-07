@@ -5,5 +5,5 @@ venv/
 models/
 
 __pycache__/
-
+*.csv
 *.xlsx
