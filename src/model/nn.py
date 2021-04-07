@@ -23,7 +23,6 @@ class MGNN:
             layers = config["layers"]
             self.l3_model = Sequential()
             self.l3_model.add(Input(layers[0]['width']))
-            self.l3_model.add(BatchNormalization())
             for i in range(1, len(layers)):
                 self.l3_model.add(Dense(layers[i]["width"],
                                         activation=layers[i]["activation"]))
