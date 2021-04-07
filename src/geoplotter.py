@@ -15,6 +15,16 @@ https://kartkatalog.geonorge.no/metadata/7408853f-eb7d-48dd-bb6c-80c7e80f7392
 """
 
 
+def normalize(color_dict):
+    maximum = max(color_dict.values())
+    minimum = min(color_dict.values())
+    color_dict_normalized = dict()
+    for key in color_dict.keys():
+        color_dict_normalized[key] = (
+            color_dict[key] - minimum) / (maximum - minimum)
+    return color_dict_normalized
+
+
 def PolyArea(points):
     x, y = np.array(points[0]).T
 
@@ -37,19 +47,32 @@ def plot_kommuner(color_dict={}, namedict=None):
     """
     fig, ax = plt.subplots()
     ax.set_aspect('equal')
+
+    color_dict_normalized = normalize(color_dict)
+
     for kommune in kommuner:
         geometry = kommune['geometry']
         kommunenr = kommune['properties']['kommunenummer']
         if kommunenr not in color_dict and namedict is not None:
             kommunenr = namedict.get(kommune['properties']['navn'])
 
-        color = (cmap(color_dict[kommunenr]) if kommunenr in color_dict
+        color = (cmap(color_dict_normalized[kommunenr])
+                 if kommunenr in color_dict
                  else (.8, .8, .8, 1))
 
         for polygon in sorted(geometry['coordinates'],
                               key=PolyArea, reverse=True)[:3]:
             plt.fill(*zip(*polygon[0]),
                      color=color)
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes('right', size='4%', pad=0.05)
+
+    norm = mpl.colors.Normalize(
+        vmin=min(color_dict.values()), vmax=max(color_dict.values()))
+    mpl.colorbar.ColorbarBase(
+        cax, cmap=cmap, norm=norm, orientation='vertical')
+    ax.axis('off')
     return fig, ax
 
 
@@ -58,15 +81,7 @@ if __name__ == '__main__':
     namedict = dict((v, k) for k, v in names['kommune_names'].items())
     # df = pre_process(df)
     data = df.fillna(0).groupby(level=0).max()['elg sett antall jegerdager']
-    ploitdict = dict(zip(data.index, data.values/data.max()))
+    ploitdict = dict(zip(data.index, data.values))
     fig, ax = plot_kommuner(ploitdict, namedict)
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes('right', size='5%', pad=0.05)
-
-    norm = mpl.colors.Normalize(vmin=0, vmax=data.max())
-    mpl.colorbar.ColorbarBase(
-        cax, cmap=cmap, norm=norm, orientation='vertical')
-    ax.axes.xaxis.set_visible(False)
-    ax.axes.yaxis.set_visible(False)
     ax.set_title('Jaktdager per kommune')
     plt.show()
