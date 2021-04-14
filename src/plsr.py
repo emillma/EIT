@@ -68,11 +68,15 @@ for remove in ['sett ', 'felt ', 'pr dag']:
 scatter = ax.scatter(L1, L2, c=colors)
 ax.legend(scatter.legend_elements()[0], ['Sett per jaktdøgn', 'Felt totalt'],
           loc="lower left", title="")
+ax.scatter(*plsr.y_loadings_.ravel()[:2])
+
 
 ax.xaxis.zoom(-2)
 texts = [plt.text(L1[i], L2[i], labels[i], ha='left', va='center')
          for i in range(len(df.columns))]
 adjust_text(texts, arrowprops=dict(arrowstyle='-', color='black'))
+
 # for i, txt in enumerate(df.columns):
 #     ax.annotate(txt, (L1[i], L2[i]))
 # plt.show()
+# plsr.transform

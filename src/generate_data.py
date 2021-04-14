@@ -4,23 +4,35 @@ import pandas as pd
 import numpy as np
 
 
-df, _ = get_hjortevillt_data()
-df = pre_process(df)
-df.drop(columns=df.columns[df.columns.str.contains('jaktfelt')], inplace=True)
-# df.drop(columns=df.columns[~df.columns.str.contains('sett')], inplace=True)
+hjortedata, _ = get_hjortevillt_data()
+hjortedata = pre_process(hjortedata)
+hjortedata.drop(
+    columns=hjortedata.columns[hjortedata.columns.str.contains('jaktfelt')],
+    inplace=True)
 
-index_frame = df.index.to_frame()
+værdata = pd.read_csv(
+    r'C:\Users\emilm\Documents\NTNU\4.klasse\EIT\data\merged_weather.csv')
+værdata.drop(columns='Unnamed: 0', inplace=True)
+værdata.rename(columns={'kommune': 'kommunenr',
+                        'year': 'jaktår'}, inplace=True)
+værdata.set_index(['kommunenr', 'jaktår'], inplace=True)
+værdata.sort_index(0, ['kommunenr', 'jaktår'])
+værdata = værdata[~værdata.isna().any(axis=1)]
+
+index_frame = hjortedata.index.to_frame()
 index_frame['neste jaktår'] = index_frame['jaktår'].astype(np.int32) + 1
 
 
 nextyear = pd.MultiIndex.from_frame(index_frame[['kommunenr', 'neste jaktår']])
-index_frame = index_frame.loc[nextyear.isin(df.index)]
+index_frame = index_frame.loc[nextyear.isin(hjortedata.index)]
+index_frame = index_frame.loc[index_frame.index.isin(værdata.index)]
+
 
 X_index = pd.MultiIndex.from_frame(index_frame[['kommunenr', 'jaktår']])
 Y_index = pd.MultiIndex.from_frame(index_frame[['kommunenr', 'neste jaktår']])
 
-data = df.loc[X_index]
+data = pd.concat([hjortedata.loc[X_index], værdata.loc[X_index]], axis=1)
 data.loc[:, 'elg sett sum sette elg pr dag neste aar'] = (
-    df.loc[Y_index, 'elg sett sum sette elg pr dag'].values
+    hjortedata.loc[Y_index, 'elg sett sum sette elg pr dag'].values
 )
 data.to_csv('test_data.csv')

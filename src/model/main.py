@@ -38,7 +38,7 @@ if __name__ == "__main__":
     data_keys = [data_config["last_year_key"], *
                  data_config["weather_keys"], *data_config["extra_data_keys"]]
 
-    data_keys = [i for i in train.columns[1:]
+    data_keys = [i for i in train.columns[2:]
                  if i != data_config["this_year_key"]]
 
     model = MGNN(config["model"])
