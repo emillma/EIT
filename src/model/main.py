@@ -35,9 +35,6 @@ if __name__ == "__main__":
 
     train, test = train_test_split(data, test_size=0.2)
 
-    data_keys = [data_config["last_year_key"], *
-                 data_config["weather_keys"], *data_config["extra_data_keys"]]
-
     data_keys = [i for i in train.columns[2:]
                  if i != data_config["this_year_key"]]
 
