@@ -36,7 +36,7 @@ Y = df.loc[Y_index, df.columns.str.contains(
     'sett')].values
 # Y = Y - X[:, :8]
 # Y = df.loc[Y_index].values - X
-plsr = PLSRegression(n_components=4, scale=True)
+plsr = PLSRegression(n_components=6, scale=True)
 plsr.fit(X, Y)
 
 
@@ -49,15 +49,16 @@ colors = X_index.get_level_values(0).values
 val, indices = np.unique(colors, return_inverse=True)
 
 loadings = plsr.x_loadings_
-L1 = loadings.T[0]
-L2 = loadings.T[1]
-x_load = plsr.x_loadings_.T[:2]
-y_load = plsr.y_loadings_.T[:2]
+dirs = [0, 1]
+L1 = loadings.T[dirs[0]]
+L2 = loadings.T[dirs[1]]
+x_load = plsr.x_loadings_.T[dirs]
+y_load = plsr.y_loadings_.T[dirs]
 
 plt.close('all')
 fig, ax = plt.subplots(1, 1)
-ax.set_xlim([-1, 1])
-ax.set_ylim([-1, 1])
+# ax.set_xlim([-1, 1])
+# ax.set_ylim([-1, 1])
 fig.set_size_inches(12, 8)
 plt.tight_layout()
 
@@ -89,13 +90,17 @@ legend_elements = [Line2D([0], [0], marker='o', color='w', label=name,
 
 ax.legend(handles=legend_elements,
           loc="lower left", title="")
-
+other_objects = []
+other_objects.append(ax.axvline(x=0))
+other_objects.append(ax.axhline(y=0))
+other_objects = []
 
 texts = [plt.text(data[0, i], data[1, i], labels[i],
                   ha='center', va='center')
          for i in range(data.shape[1])]
 
-adjust_text(texts, arrowprops=dict(arrowstyle='-', color='black'),
+adjust_text(texts, add_objects=other_objects,
+            arrowprops=dict(arrowstyle='-', color='black'),
             force_points=(3, 0.3),
             force_text=(0.1, 0.3),
             # force_objects=(0.2, 0.4)
