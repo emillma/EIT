@@ -9,7 +9,8 @@ model:
   val_frac: 0.2
   test_frac: 0.1
   patience_val: 10
-  optimizer: "Adam"
+  optimizer: "adam"
+  learning_rate: 0.001
   dropout: 0.1
   plsr_components: 4
   layers:
@@ -23,7 +24,7 @@ model:
     - width: 8
       activation: "elu"
 data:
-  path: "C:\\Users\\emilm\\Documents\\NTNU\\4.klasse\\EIT\\data\\test_data.csv"
+  path: "data/test_data.csv"
   last_year_key: "elg sett sum sette elg pr dag"
   this_year_key: "elg sett sum sette elg pr dag neste aar"
   weather_keys: []

@@ -46,7 +46,7 @@ class LogisticModel:
         predictions = self.predict(
             inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy())
 
-        return sm.mean_absolute_error(targets, predictions), targets - predictions, predictions
+        return sm.mean_squared_error(targets, predictions), targets - predictions, predictions
 
 
 if __name__ == "__main__":
