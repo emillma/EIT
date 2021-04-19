@@ -6,12 +6,21 @@ import numpy as np
 
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization
+from tensorflow.keras.optimizers import Adam, Adadelta, Adagrad, SGD, RMSprop
 from tensorflow.keras.callbacks import EarlyStopping, TerminateOnNaN
 from tensorflow.keras.losses import mean_squared_error
 from sklearn.cross_decomposition import PLSRegression
 import pandas as pd
 
 from model import LogisticModel
+
+optimizers = {
+    'adam': Adam,
+    'adadelta': Adadelta,
+    'adagrad': Adagrad,
+    'sgd': SGD,
+    'rmsprop': RMSprop,
+}
 
 
 class MGNN:
@@ -76,7 +85,7 @@ class MGNN:
             train_X[f"l2_loading_{i}"] = loading
         train_X["l2_prediction"] = l2_prediction
 
-        l2_error = l1_error - l2_prediction
+        l2_error = (l1_prediction + l2_prediction) - train_Y
         self.l3_error_scaling = np.std(l2_error) * 3 * 2
         self.l3_error_mean = np.mean(l2_error)
 
@@ -90,8 +99,11 @@ class MGNN:
         patience_val = config["patience_val"]
 
         self.l3_model.compile(loss=mean_squared_error,
-                              optimizer=config["optimizer"],
+                              optimizer=optimizers[config["optimizer"]](
+                                  config["learning_rate"]),
                               metrics=[mean_squared_error])
+
+        self.l3_model.summary()
 
         early_stopping = EarlyStopping(
             monitor='val_loss', patience=patience_val, verbose=1)
@@ -101,7 +113,7 @@ class MGNN:
                           batch_size=batch_size,
                           epochs=num_epochs,
                           verbose=1,
-                          validation_split=val_frac, callbacks=[TerminateOnNaN()])
+                          validation_split=val_frac, callbacks=[TerminateOnNaN(), early_stopping])
 
     def predict(self, inputs: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
         l1_prediction = self.l1_model.predict(
@@ -134,7 +146,7 @@ class MGNN:
             inputs_copy[f"l2_loading_{i}"] = loading
         inputs_copy["l2_prediction"] = l2_predictions
 
-        l2_error = l1_error - l2_predictions
+        l2_error = (l1_predictions + l2_predictions) - targets
 
         upto_l2_error = np.mean(
             ((l1_predictions + l2_predictions) - targets)**2)
