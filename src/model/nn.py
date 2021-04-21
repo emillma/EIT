@@ -148,18 +148,18 @@ class MGNN:
 
         l2_error = targets - (l1_predictions + l2_predictions)
 
-        upto_l2_error = sm.mean_absolute_error(
+        upto_l2_error = sm.mean_squared_error(
             targets, l1_predictions + l2_predictions)
 
         l2_error_adj = ((l2_error - self.l3_error_mean)
                         / self.l3_error_scaling + 0.5)
 
-        l2_test_error = sm.mean_absolute_error(l1_error, l2_predictions)
+        l2_test_error = sm.mean_squared_error(l1_error, l2_predictions)
 
         l3_test_error = self.l3_model.evaluate(inputs_copy, l2_error_adj)
 
         predictions = self.predict(inputs, last_year_key, weather_keys)
         l3_error = targets - predictions
-        test_score = sm.mean_absolute_error(targets, predictions)
+        test_score = sm.mean_squared_error(targets, predictions)
 
         return test_score, l3_test_error, l2_test_error, l1_test_error, upto_l2_error, l1_error.to_numpy(), l2_error.to_numpy(), l3_error.to_numpy()
