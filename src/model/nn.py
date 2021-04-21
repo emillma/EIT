@@ -74,7 +74,7 @@ class MGNN:
 
         l1_prediction = self.l1_model.predict(
             train_X[last_year_key].to_numpy(), train_X[weather_keys].to_numpy())
-        l1_error = train_Y - l1_prediction
+        l1_error = l1_prediction - train_Y
         train_X["l1_prediction"] = l1_prediction
 
         self.l2_model.fit(train_X, l1_error)
@@ -109,11 +109,11 @@ class MGNN:
             monitor='val_loss', patience=patience_val, verbose=1)
 
         print(f'Running... {config["optimizer"]}')
-        self.l3_model.fit(train_X, l2_error,
-                          batch_size=batch_size,
-                          epochs=num_epochs,
-                          verbose=1,
-                          validation_split=val_frac, callbacks=[TerminateOnNaN(), early_stopping])
+        return self.l3_model.fit(train_X, l2_error,
+                                 batch_size=batch_size,
+                                 epochs=num_epochs,
+                                 verbose=1,
+                                 validation_split=val_frac, callbacks=[TerminateOnNaN(), early_stopping])
 
     def predict(self, inputs: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
         l1_prediction = self.l1_model.predict(
@@ -151,17 +151,15 @@ class MGNN:
         upto_l2_error = np.mean(
             ((l1_predictions + l2_predictions) - targets)**2)
 
-        self.l3_error_scaling = np.std(l2_error) * 3 * 2
-        self.l3_error_mean = np.mean(l2_error)
-
-        l2_error = ((l2_error - self.l3_error_mean)
-                    / self.l3_error_scaling + 0.5)
+        l2_error_adj = ((l2_error - self.l3_error_mean)
+                        / self.l3_error_scaling + 0.5)
 
         l2_test_error = np.mean((l1_error - l2_predictions)**2)
 
-        l3_test_error = self.l3_model.evaluate(inputs_copy, l2_error)[0]
+        l3_test_error = self.l3_model.evaluate(inputs_copy, l2_error_adj)[0]
 
         predictions = self.predict(inputs, last_year_key, weather_keys)
+        l3_error = targets - predictions
         test_score = np.mean((targets - predictions)**2)
 
-        return test_score, l3_test_error, l2_test_error, l1_test_error, upto_l2_error
+        return test_score, l3_test_error, l2_test_error, l1_test_error, upto_l2_error, l1_error.to_numpy(), l2_error.to_numpy(), l3_error.to_numpy()
