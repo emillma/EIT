@@ -27,7 +27,7 @@ class LogisticModel:
         self.R0 = inputs[1]
         self.a = inputs[2:]
         predictions = self.predict(args[1], args[2])
-        return np.sum((args[0] - predictions)**2)
+        return sm.mean_absolute_error(args[0], predictions)
 
     def fit(self, inputs: pd.DataFrame, targets: pd.DataFrame, last_year_key: str, weather_keys: List[str]):
         """
@@ -46,7 +46,7 @@ class LogisticModel:
         predictions = self.predict(
             inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy())
 
-        return sm.mean_squared_error(targets, predictions), targets - predictions, predictions
+        return sm.mean_absolute_error(targets, predictions), targets - predictions, predictions
 
 
 if __name__ == "__main__":

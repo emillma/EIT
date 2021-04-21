@@ -8,8 +8,9 @@ from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import Adam, Adadelta, Adagrad, SGD, RMSprop
 from tensorflow.keras.callbacks import EarlyStopping, TerminateOnNaN
-from tensorflow.keras.losses import mean_squared_error
+from tensorflow.keras.losses import MeanAbsoluteError, MeanSquaredError
 from sklearn.cross_decomposition import PLSRegression
+import sklearn.metrics as sm
 import pandas as pd
 
 from model import LogisticModel
@@ -74,7 +75,7 @@ class MGNN:
 
         l1_prediction = self.l1_model.predict(
             train_X[last_year_key].to_numpy(), train_X[weather_keys].to_numpy())
-        l1_error = l1_prediction - train_Y
+        l1_error = train_Y - l1_prediction
         train_X["l1_prediction"] = l1_prediction
 
         self.l2_model.fit(train_X, l1_error)
@@ -85,7 +86,7 @@ class MGNN:
             train_X[f"l2_loading_{i}"] = loading
         train_X["l2_prediction"] = l2_prediction
 
-        l2_error = (l1_prediction + l2_prediction) - train_Y
+        l2_error = train_Y - (l1_prediction + l2_prediction)
         self.l3_error_scaling = np.std(l2_error) * 3 * 2
         self.l3_error_mean = np.mean(l2_error)
 
@@ -98,10 +99,9 @@ class MGNN:
         val_frac = config["val_frac"]
         patience_val = config["patience_val"]
 
-        self.l3_model.compile(loss=mean_squared_error,
+        self.l3_model.compile(loss="mae",
                               optimizer=optimizers[config["optimizer"]](
-                                  config["learning_rate"]),
-                              metrics=[mean_squared_error])
+                                  config["learning_rate"]))
 
         self.l3_model.summary()
 
@@ -146,20 +146,20 @@ class MGNN:
             inputs_copy[f"l2_loading_{i}"] = loading
         inputs_copy["l2_prediction"] = l2_predictions
 
-        l2_error = (l1_predictions + l2_predictions) - targets
+        l2_error = targets - (l1_predictions + l2_predictions)
 
-        upto_l2_error = np.mean(
-            ((l1_predictions + l2_predictions) - targets)**2)
+        upto_l2_error = sm.mean_absolute_error(
+            targets, l1_predictions + l2_predictions)
 
         l2_error_adj = ((l2_error - self.l3_error_mean)
                         / self.l3_error_scaling + 0.5)
 
-        l2_test_error = np.mean((l1_error - l2_predictions)**2)
+        l2_test_error = sm.mean_absolute_error(l1_error, l2_predictions)
 
-        l3_test_error = self.l3_model.evaluate(inputs_copy, l2_error_adj)[0]
+        l3_test_error = self.l3_model.evaluate(inputs_copy, l2_error_adj)
 
         predictions = self.predict(inputs, last_year_key, weather_keys)
         l3_error = targets - predictions
-        test_score = np.mean((targets - predictions)**2)
+        test_score = sm.mean_absolute_error(targets, predictions)
 
         return test_score, l3_test_error, l2_test_error, l1_test_error, upto_l2_error, l1_error.to_numpy(), l2_error.to_numpy(), l3_error.to_numpy()
