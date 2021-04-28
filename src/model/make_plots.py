@@ -61,6 +61,9 @@ if __name__ == "__main__":
     percentage_total_pred_error = []
     nn_training_history = []
 
+    Ks = []
+    Rs = []
+
     for i in range(100):
 
         train, test = train_test_split(data, test_size=0.2)
@@ -95,6 +98,8 @@ if __name__ == "__main__":
         l1_errors.append(test_results[3])
         l2_errors.append(test_results[2])
         l3_errors.append(test_results[1])
+        Ks.append(model.l1_model.K)
+        Rs.append(model.l1_model.R0)
 
     l1_pred_mean = np.mean(l1_pred_errors)
     l2_pred_mean = np.mean(up_to_l2_pred_errors)
@@ -120,6 +125,9 @@ if __name__ == "__main__":
     l2_std = np.std(l2_errors)
     l3_std = np.std(l3_errors)
 
+    K_mean = np.mean(Ks)
+    R_mean = np.mean(Rs)
+
     labels = ["Layer 1", "Up to layer 2", "Full model"]
     x_pos = np.arange(len(labels))
     means = [l1_pred_mean, l2_pred_mean, model_pred_mean]
@@ -140,6 +148,8 @@ if __name__ == "__main__":
         f"Percentage: l1_mean: {l1_percentage_mean}, l2_mean: {l2_percentage_mean}, model_mean: {percentage_total_mean}")
     print(
         f"l1_std: {relative_l1_std}, l2_std: {relative_l2_std}, model_std: {relative_model_std}")
+
+    print(f"mean K: {K_mean}, mean R: {R_mean}")
 
     plot_data_and_dev("Perdiction error: Mean percentage error",
                       labels, x_pos, relative_means, relative_std)
