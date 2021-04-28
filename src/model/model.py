@@ -36,7 +36,7 @@ class LogisticModel:
         """
         x0 = np.random.random(2 + self.num_weather_vars)
         final_params = minimize(
-            self.objective_function, x0, args=(targets, inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy()), method="nelder-mead")
+            self.objective_function, x0, args=(targets, inputs[last_year_key].to_numpy(), inputs[weather_keys].to_numpy()), method="BFGS")
 
         self.K = final_params.x[0]
         self.R0 = final_params.x[1]
