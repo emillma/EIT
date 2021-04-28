@@ -8,7 +8,7 @@ model:
   batch_size: 16
   val_frac: 0.2
   test_frac: 0.1
-  patience_val: 10
+  patience_val: 5
   optimizer: "adam"
   learning_rate: 0.001
   dropout: 0.1
